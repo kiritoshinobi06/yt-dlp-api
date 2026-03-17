@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: yt-dlp-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -b 0.0.0.0:$PORT -w 4 app:app
+    envVars:
+      - key: PORT
+        value: 10000
+    freeRegion: true
