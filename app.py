@@ -5,9 +5,9 @@ import json
 import random
 
 app = Flask(__name__)
-CORS(app, origins=["*"], allow_headers=["Content-Type", "Authorization"], methods=["GET", "POST", "OPTIONS"])
+CORS(app)
 
-# User agents para rotar y evitar detección
+# User agents para rotar
 USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -16,14 +16,6 @@ USER_AGENTS = [
 
 @app.route('/', methods=['POST', 'OPTIONS'])
 def download():
-    # Handle CORS preflight
-    if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        return response
-    
     try:
         data = request.get_json()
         url = data.get('url')
@@ -53,18 +45,15 @@ def download():
             # Obtener URL del video
             video_url = None
             
-            # Intentar 1: URL directa en info
             if 'url' in info and info.get('protocol') in ['https', 'http', None]:
                 video_url = info['url']
             
-            # Intentar 2: Buscar en formatos
             if not video_url and 'formats' in info:
                 for fmt in reversed(info.get('formats', [])):
                     if fmt.get('url') and fmt.get('protocol') in ['https', 'http', 'http_dash_segments', None]:
                         video_url = fmt['url']
                         break
             
-            # Intentar 3: Usar el primer formato disponible
             if not video_url and 'formats' in info and len(info['formats']) > 0:
                 video_url = info['formats'][-1].get('url')
 
@@ -99,17 +88,7 @@ def download():
 
 @app.route('/health', methods=['GET'])
 def health():
-    response = jsonify({'status': 'ok', 'service': 'yt-dlp-api'})
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
-
-# CORS headers for all responses
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    return response
+    return jsonify({'status': 'ok', 'service': 'yt-dlp-api'})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=7860)
