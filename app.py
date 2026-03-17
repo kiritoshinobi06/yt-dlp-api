@@ -1,11 +1,11 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 import yt_dlp
 import json
 import random
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # User agents para rotar
 USER_AGENTS = [
@@ -14,7 +14,7 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
 ]
 
-@app.route('/', methods=['POST', 'OPTIONS'])
+@app.route('/', methods=['POST'])
 def download():
     try:
         data = request.get_json()
@@ -89,6 +89,15 @@ def download():
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({'status': 'ok', 'service': 'yt-dlp-api'})
+
+# Handle OPTIONS preflight manually
+@app.route('/', methods=['OPTIONS'])
+def options_handler():
+    response = make_response('', 200)
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=7860)
